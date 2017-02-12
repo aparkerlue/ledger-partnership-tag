@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from collections import OrderedDict
+import ast
 
 class Posting:
     def __init__(self, account, value):
@@ -29,7 +30,8 @@ class RealPosting(Posting):
         shadow_postings = self.generate_shadow_postings()
         if shadow_postings is not None:
             for p in shadow_postings:
-                print(p)
+                if p.value != 0:
+                    print(p)
 
     def generate_shadow_postings(self):
         if self.shadow_spec is None:
@@ -82,7 +84,6 @@ class Xact:
         self.real_postings = []
         # OrderedDict of shadow owners and values
         self.shadow_spec = OrderedDict()
-        self.shadow_postings = [] # List of account-value pairs
 
     def clear(self):
         del self.real_postings[:]
@@ -95,7 +96,9 @@ class Xact:
         self.real_postings.append(p)
 
     def add_shadow(self, shadow_spec):
-        self.shadow_spec.update(shadow_spec)
+        s = Xact.interpret_shadow_spec(shadow_spec)
+        if s is not None:
+            self.shadow_spec.update(s)
 
     def resolve_elided_posting_value(self):
         i_valueless = [ i for i, v in
@@ -114,6 +117,23 @@ class Xact:
                     i_valueless, self.real_postings))
 
     @staticmethod
+    def interpret_shadow_spec(spec):
+        try:
+            shadow_spec = ast.literal_eval(spec)
+        except (SyntaxError, ValueError):
+            shadow_spec = OrderedDict()
+            components = [ tuple(s.strip().split(" "))
+                           for s in spec.split(',') ]
+            for c in components:
+                k = c[0]
+                try:
+                    v = float(c[1])
+                except IndexError:
+                    v = None
+                shadow_spec[k] = v
+        return shadow_spec
+
+    @staticmethod
     def interpret_value(value):
         if type(value) is str:
             v = float(value.translate({ ord(c): None for c in '$,' }))
@@ -128,8 +148,8 @@ class Xact:
 
 if __name__ == "__main__":
     import argparse
-    import ast
     import re
+    import sys
 
     # Transaction begin pattern
     trbegpat = re.compile(r'^\d')
@@ -148,13 +168,19 @@ if __name__ == "__main__":
  
     xact = Xact()
     bInXact = False
+    b_found_shadow_tag = False
+    lineno = 0
+    shadowless_xact_lines = []
     with open(filepath, 'r') as f:
         for line in f:
+            lineno += 1
             if bInXact:
                 if trendpat.match(line):
                     # At end of transaction
                     xact.print_shadow_postings()
                     bInXact = False
+                    if b_found_shadow_tag:
+                        shadowless_xact_lines.pop()
                 else:
                     m = rpostpat.match(line)
                     if m:
@@ -162,12 +188,15 @@ if __name__ == "__main__":
                     else:
                         m = shkeypat.search(line)
                         if m:
-                            shadow = ast.literal_eval(m.group(1).strip())
+                            b_found_shadow_tag = True
+                            shadow = m.group(1).strip()
                             xact.add_shadow(shadow)
 
             if not bInXact and trbegpat.match(line):
                 # At beginning of transaction
                 bInXact = True
+                shadowless_xact_lines.append(lineno)
+                b_found_shadow_tag = False
                 xact.clear()
                 m = shkeypat.search(line)
                 if m:
@@ -179,3 +208,10 @@ if __name__ == "__main__":
     if bInXact:
         xact.print_shadow_postings()
         bInXact = False
+        if b_found_shadow_tag:
+            shadowless_xact_lines.pop()
+
+    n = len(shadowless_xact_lines)
+    if n > 0:
+        print("Error: Found {} transactions without shadow tags at lines: {}".format(n, shadowless_xact_lines), file = sys.stderr)
+        sys.exit(1)
