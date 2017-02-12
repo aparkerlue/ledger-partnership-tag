@@ -2,6 +2,7 @@
 
 from collections import OrderedDict
 import ast
+import re
 
 class Posting:
     def __init__(self, account, value):
@@ -146,11 +147,7 @@ class Xact:
         for p in self.real_postings:
             p.print_shadow_postings()
 
-if __name__ == "__main__":
-    import argparse
-    import re
-    import sys
-
+def adjoin_shadow_postings(filepath):
     # Transaction begin pattern
     trbegpat = re.compile(r'^\d')
     # Transaction end pattern
@@ -160,12 +157,6 @@ if __name__ == "__main__":
     # Shadow key pattern
     shkeypat = re.compile(r';\s*Shadow\s*:(.*)')
 
-    parser = argparse.ArgumentParser(
-        description = 'Generate shadow postings for Ledger journal.')
-    parser.add_argument('journal', help = 'Ledger journal file')
-    args = parser.parse_args()
-    filepath = args.journal
- 
     xact = Xact()
     bInXact = False
     b_found_shadow_tag = False
@@ -211,6 +202,19 @@ if __name__ == "__main__":
         if b_found_shadow_tag:
             shadowless_xact_lines.pop()
 
+    return shadowless_xact_lines
+
+if __name__ == "__main__":
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(
+        description = 'Generate shadow postings for Ledger journal.')
+    parser.add_argument('journal', help = 'Ledger journal file')
+    args = parser.parse_args()
+    filepath = args.journal
+
+    shadowless_xact_lines = adjoin_shadow_postings(filepath)
     n = len(shadowless_xact_lines)
     if n > 0:
         print("Error: Found {} transactions without shadow tags at lines: {}".format(n, shadowless_xact_lines), file = sys.stderr)
