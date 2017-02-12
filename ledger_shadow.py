@@ -48,7 +48,7 @@ class RealPosting(Posting):
             # Calculate values for all but last owner
             for k in keys[:-1]:
                 account = "[{}:{}]".format(k, self.account)
-                value = 1e-2 * self.shadow_spec[k] * self.value
+                value = round(1e-2 * self.shadow_spec[k] * self.value, 2)
                 p = Posting(account, value)
                 shadow_postings.append(p)
             k_last = keys[-1]
