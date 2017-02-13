@@ -1,4 +1,57 @@
-# partnership_ledger.py #
+# `partnership_ledger.py` #
+
+`partnership_ledger.py` is a Python script that facilitates
+[partnership accounting](https://en.wikipedia.org/wiki/Partnership_accounting)
+in [Ledger](http://www.ledger-cli.org/). This enables you to track
+equity ownership stakes in a book of accounts, which is useful for any
+situation that involves multiple stakeholders: households, joint
+ventures, and investment clubs for example.
+
+## Partnership accounting with `partnership_ledger.py` ##
+
+To track partnership stakes:
+
+1. Include a `Partnership` tag with each transaction in your Ledger
+   journal
+2. Run `partnership_ledger.py` in lieu of `ledger`
+
+For example, a transaction involving two partners might look like this:
+
+    2016-12-31 Bank
+        ; Partnership: Partner1 60, Partner2 40
+	    Assets:Cash:Checking                    $1000.00
+	    Assets:Cash:Savings
+
+This transaction represents a transfer of $1,000 from the partners'
+savings account to their checking account; Partner1's share of the
+transfer is $600, and Partner2's share of the transfer is $400.
+`partnership_ledger.py` processes this transaction using virtual
+postings:
+
+    2016-12-31 Bank
+        ; Partnership: Partner1 60, Partner2 40
+	    Assets:Cash:Checking                    $1000.00
+	    Assets:Cash:Savings
+	    [Partner1:Assets:Cash:Checking]          $600.00
+	    [Partner1:Assets:Cash:Savings]          $-600.00
+	    [Partner2:Assets:Cash:Checking]          $400.00
+	    [Partner2:Assets:Cash:Savings]          $-400.00
+
+In order to fully implement partnership accounting in a journal, every
+transaction should have `Partnership` that reveals the share of
+partnership stakes. Transactions that are not meant to include
+partnership stakes should include an explicit tag:
+
+        ; Partnership: None
+
+`partnership_ledger.py` is a stopgap:
+
+- A robust solution would use Ledger's Python facilities, but I just
+  couldn't figure them out with Python 3.
+- It only works with U.S. dollar posting values.
+
+It would be great if Ledger included built-in support for a Partnership
+tag. :)
 
 ## To do ##
 
