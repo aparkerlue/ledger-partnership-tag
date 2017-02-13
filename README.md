@@ -1,11 +1,11 @@
-# `partnership_ledger.py` #
+# ledger-partnership-tag #
 
 `partnership_ledger.py` is a Python script that facilitates
 [partnership accounting](https://en.wikipedia.org/wiki/Partnership_accounting)
-in [Ledger](http://www.ledger-cli.org/). This enables you to track
-equity ownership stakes in a book of accounts, which is useful for any
-situation that involves multiple stakeholders: households, joint
-ventures, and investment clubs for example.
+in [Ledger](http://www.ledger-cli.org/) using a `Partnership` tag. This
+enables you to track equity ownership stakes in a book of accounts,
+which is useful for any situation that involves multiple stakeholders:
+households, joint ventures, and investment clubs for example.
 
 ## Partnership accounting with `partnership_ledger.py` ##
 
