@@ -37,7 +37,7 @@ class RealPosting(Posting):
     def shadow_postings(self):
         shadow_postings = self.generate_shadow_postings()
         if shadow_postings is not None:
-            p = [ p for p in shadow_postings if p.value != 0 ]
+            p = [ str(p) for p in shadow_postings if p.value != 0 ]
         else:
             p = []
         return p
@@ -221,20 +221,40 @@ def adjoin_shadow_postings(filepath):
 
 if __name__ == "__main__":
     import argparse
+    import subprocess
     import sys
 
     parser = argparse.ArgumentParser(
         description = 'Generate shadow postings for journal and run Ledger.')
     parser.add_argument('-f', '--file', metavar = 'FILE',
-                        help = 'Read journal data from FILE')
+                        help = 'read journal data from FILE')
+    parser.add_argument('-N', '--just-print',
+                        action = 'store_true',
+                        help = 'print the journal with shadow postings and exit')
     (args, ledger_args) = parser.parse_known_args()
     filepath = args.file
+    just_print = args.just_print
 
-    (journal, shadowless_xact_lines) = adjoin_shadow_postings(filepath)
-    n = len(shadowless_xact_lines)
-    if n > 0:
-        print("Error: Found {} transactions without shadow tags at lines: {}".format(n, shadowless_xact_lines), file = sys.stderr)
-        sys.exit(1)
-
-    for line in journal:
-        print(line)
+    if filepath is None:
+        if just_print:
+            print("Error: No journal file specified", file = sys.stderr)
+            sys.exit(1)
+        else:
+            subprocess.run([ 'ledger' ] + ledger_args)
+    else:
+        (journal, shadowless_xact_lines) = adjoin_shadow_postings(filepath)
+        n = len(shadowless_xact_lines)
+        if n > 0:
+            print("Error: Found {} transactions without shadow tags at lines: {}".format(n, shadowless_xact_lines), file = sys.stderr)
+            sys.exit(1)
+        elif just_print:
+            for line in journal:
+                print(line)
+        elif len(ledger_args) == 0:
+            print("Error: No ledger arguments provided", file = sys.stderr)
+            sys.exit(1)
+        else:
+            journal_string = '\n'.join(journal) + '\n'
+            encoded_journal_string = journal_string.encode('utf-8')
+            subprocess.run([ 'ledger', '-f', '-' ] + ledger_args,
+                           input = encoded_journal_string)
