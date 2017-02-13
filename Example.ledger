@@ -1,0 +1,19 @@
+2017-01-06 (#1) MTA
+    ; Partnership: Partner1
+    Assets:Cash:Checking                    $1000.00
+    Income:Salary
+
+2017-01-10 (#2) Landlord
+    ; Partnership: Partner1 50, Partner2
+    Expenses:Rent                            $960.00
+    Assets:Cash:Checking
+
+2017-01-13 (#3) Glass Factory
+    ; Partnership: Partner2
+    Assets:Cash:Checking                    $1200.00
+    Income:Salary
+
+2017-01-15 (#4) Pacific Gas & Electric
+    ; Partnership: Partner1 50, Partner2
+    Expenses:Utilities                        $85.00
+    Liabilities:Credit:Visa

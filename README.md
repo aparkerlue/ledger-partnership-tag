@@ -7,6 +7,41 @@ enables you to track equity ownership stakes in a book of accounts,
 which is useful for any situation that involves multiple stakeholders:
 households, joint ventures, and investment clubs for example.
 
+## Invocation ##
+
+Invoke `partnership_ledger.py` in lieu of `ledger`. A few examples using
+`Example.ledger`.
+
+    $ partnership_ledger.py -f Example.ledger bal --real
+                $1240.00  Assets:Cash:Checking
+                $1045.00  Expenses
+                 $960.00    Rent
+                  $85.00    Utilities
+               $-2200.00  Income:Salary
+                 $-85.00  Liabilities:Credit:Visa
+    --------------------
+                       0
+    $ partnership_ledger.py -f Example.ledger bal ^Partner1
+                       0  Partner1
+                 $520.00    Assets:Cash:Checking
+                 $522.50    Expenses
+                 $480.00      Rent
+                  $42.50      Utilities
+               $-1000.00    Income:Salary
+                 $-42.50    Liabilities:Credit:Visa
+    --------------------
+                       0
+    $ partnership_ledger.py -f Example.ledger bal ^Partner2
+                       0  Partner2
+                 $720.00    Assets:Cash:Checking
+                 $522.50    Expenses
+                 $480.00      Rent
+                  $42.50      Utilities
+               $-1200.00    Income:Salary
+                 $-42.50    Liabilities:Credit:Visa
+    --------------------
+                       0
+
 ## Partnership accounting with `partnership_ledger.py` ##
 
 To track partnership stakes:
@@ -37,8 +72,10 @@ postings:
 	    [Partner2:Assets:Cash:Checking]          $400.00
 	    [Partner2:Assets:Cash:Savings]          $-400.00
 
+## Additional notes ##
+
 In order to fully implement partnership accounting in a journal, every
-transaction should have `Partnership` that reveals the share of
+transaction should have a `Partnership` tag that reveals the share of
 partnership stakes. Transactions that are not meant to include
 partnership stakes should include an explicit tag:
 
@@ -50,8 +87,8 @@ partnership stakes should include an explicit tag:
   couldn't figure them out with Python 3.
 - It only works with U.S. dollar posting values.
 
-It would be great if Ledger included built-in support for a Partnership
-tag. :)
+It would be great if Ledger included built-in support for a
+`Partnership` tag. :)
 
 ## To do ##
 
