@@ -34,6 +34,14 @@ class RealPosting(Posting):
                 if p.value != 0:
                     print(p)
 
+    def shadow_postings(self):
+        shadow_postings = self.generate_shadow_postings()
+        if shadow_postings is not None:
+            p = [ p for p in shadow_postings if p.value != 0 ]
+        else:
+            p = []
+        return p
+
     def generate_shadow_postings(self):
         if self.shadow_spec is None:
             return
@@ -147,6 +155,11 @@ class Xact:
         for p in self.real_postings:
             p.print_shadow_postings()
 
+    def shadow_postings(self):
+        self.resolve_elided_posting_value()
+        p = [ q for p in self.real_postings for q in p.shadow_postings() ]
+        return p
+
 def adjoin_shadow_postings(filepath):
     # Transaction begin pattern
     trbegpat = re.compile(r'^\d')
@@ -157,18 +170,20 @@ def adjoin_shadow_postings(filepath):
     # Shadow key pattern
     shkeypat = re.compile(r';\s*Shadow\s*:(.*)')
 
+    journal = []
+    shadowless_xact_lines = []
+
     xact = Xact()
     bInXact = False
     b_found_shadow_tag = False
     lineno = 0
-    shadowless_xact_lines = []
     with open(filepath, 'r') as f:
         for line in f:
             lineno += 1
             if bInXact:
                 if trendpat.match(line):
                     # At end of transaction
-                    xact.print_shadow_postings()
+                    journal.extend(xact.shadow_postings())
                     bInXact = False
                     if b_found_shadow_tag:
                         shadowless_xact_lines.pop()
@@ -194,28 +209,32 @@ def adjoin_shadow_postings(filepath):
                     shadow = ast.literal_eval(m.group(1).strip())
                     xact.add_shadow(shadow)
 
-            print(line, end='')
+            journal.append(line.rstrip())
 
     if bInXact:
-        xact.print_shadow_postings()
+        journal.extend(xact.shadow_postings())
         bInXact = False
         if b_found_shadow_tag:
             shadowless_xact_lines.pop()
 
-    return shadowless_xact_lines
+    return (journal, shadowless_xact_lines)
 
 if __name__ == "__main__":
     import argparse
     import sys
 
     parser = argparse.ArgumentParser(
-        description = 'Generate shadow postings for Ledger journal.')
-    parser.add_argument('journal', help = 'Ledger journal file')
-    args = parser.parse_args()
-    filepath = args.journal
+        description = 'Generate shadow postings for journal and run Ledger.')
+    parser.add_argument('-f', '--file', metavar = 'FILE',
+                        help = 'Read journal data from FILE')
+    (args, ledger_args) = parser.parse_known_args()
+    filepath = args.file
 
-    shadowless_xact_lines = adjoin_shadow_postings(filepath)
+    (journal, shadowless_xact_lines) = adjoin_shadow_postings(filepath)
     n = len(shadowless_xact_lines)
     if n > 0:
         print("Error: Found {} transactions without shadow tags at lines: {}".format(n, shadowless_xact_lines), file = sys.stderr)
         sys.exit(1)
+
+    for line in journal:
+        print(line)
