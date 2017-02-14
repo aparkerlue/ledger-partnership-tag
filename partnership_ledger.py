@@ -140,6 +140,13 @@ class Xact:
                 except IndexError:
                     v = None
                 partnership_spec[k] = v
+            if all([ v is None for v in partnership_spec.values() ]):
+                n = len(partnership_spec)
+                if n > 1:
+                    v = round(100 / n, 2)
+                    keys = list(partnership_spec.keys())
+                    for k in keys[:-1]:
+                        partnership_spec[k] = v
         return partnership_spec
 
     @staticmethod
