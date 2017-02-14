@@ -226,28 +226,32 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description = 'Generate virtual partnership postings for journal and run Ledger.')
-    parser.add_argument('-f', '--file', metavar = 'FILE',
+    parser.add_argument('-f', '--file', metavar = 'FILE', nargs = '*',
                         help = 'read journal data from FILE')
     parser.add_argument('-N', '--just-print',
                         action = 'store_true',
                         help = 'print journal with partnership postings and exit')
     (args, ledger_args) = parser.parse_known_args()
-    filepath = args.file
+    filepaths = args.file
     just_print = args.just_print
 
-    if filepath is None:
+    if filepaths is None:
         if just_print:
             print("Error: No journal file specified", file = sys.stderr)
             sys.exit(1)
         else:
             subprocess.run([ 'ledger' ] + ledger_args)
     else:
-        (journal, partnershipless_xact_lines) = adjoin_partnership_postings(filepath)
-        n = len(partnershipless_xact_lines)
-        if n > 0:
-            print("Error: Found {} transactions without partnership tags at lines: {}".format(n, partnershipless_xact_lines), file = sys.stderr)
-            sys.exit(1)
-        elif just_print:
+        journal = []
+        for f in filepaths:
+            (j, partnershipless_xact_lines) = adjoin_partnership_postings(f)
+            n = len(partnershipless_xact_lines)
+            if n > 0:
+                print("Error: Found {} transactions in {} that do not have partnership tags; see lines: {}".format(n, f, partnershipless_xact_lines),
+                      file = sys.stderr)
+                sys.exit(1)
+            journal.extend(j)
+        if just_print:
             for line in journal:
                 print(line)
         elif len(ledger_args) == 0:
