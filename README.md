@@ -92,6 +92,7 @@ It would be great if Ledger included built-in support for a
 
 ## To do ##
 
+- [x] 2017-02-18 Process `、` correctly
 - [ ] 2017-02-12 Print all partnership postings for each partner
   together
 - [ ] 2017-02-12 Error checking: For each real posting, check that sum

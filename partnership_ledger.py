@@ -173,7 +173,7 @@ def adjoin_partnership_postings(filepath):
     # Transaction end pattern
     trendpat = re.compile(r'(^[^\s]|^[\s]*$)')
     # Real posting pattern
-    rpostpat = re.compile(r'^\s+(?P<account>[\w\-,]+(\s?[\w\-,:]+)*)(\s{2,}(?P<value>-?\$?\s*-?[\d]+(,\d+)*(\.\d+)?))?')
+    rpostpat = re.compile(r'^\s+(?P<account>[\w\-,\'()、]+(\s?[\w\-,\'()、:]+)*)(\s{2,}(?P<value>-?\$?\s*-?[\d]+(,\d+)*(\.\d+)?))?')
     # Partnership key pattern
     shkeypat = re.compile(r';\s*Partnership\s*:(.*)')
 
