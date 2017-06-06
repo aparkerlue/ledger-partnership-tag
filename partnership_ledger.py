@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from collections import OrderedDict
-import ast
 import re
 
 class Posting:
@@ -89,12 +88,15 @@ class RealPosting(Posting):
 
 class Xact:
     def __init__(self):
-        # List of `Posting`s
+        # Raw transaction lines
+        self.lines = []
+        # List of real `Posting`s
         self.real_postings = []
         # OrderedDict of partners and values
         self.partnership_spec = OrderedDict()
 
     def clear(self):
+        del self.lines[:]
         del self.real_postings[:]
         self.partnership_spec.clear()
 
@@ -110,6 +112,10 @@ class Xact:
             self.partnership_spec.update(s)
 
     def resolve_elided_posting_value(self):
+        '''Determine and assign elided posting values.
+
+        :return: None
+        '''
         i_valueless = [ i for i, v in
                         zip(range(len(self.real_postings)), self.real_postings)
                         if v.value is None ]
@@ -127,9 +133,7 @@ class Xact:
 
     @staticmethod
     def interpret_partnership_spec(spec):
-        try:
-            partnership_spec = ast.literal_eval(spec)
-        except (SyntaxError, ValueError):
+        if spec.strip() != "None":
             partnership_spec = OrderedDict()
             components = [ tuple(s.strip().split(" "))
                            for s in spec.split(',') ]
@@ -147,7 +151,7 @@ class Xact:
                     keys = list(partnership_spec.keys())
                     for k in keys[:-1]:
                         partnership_spec[k] = v
-        return partnership_spec
+            return partnership_spec
 
     @staticmethod
     def interpret_value(value):
@@ -158,71 +162,96 @@ class Xact:
         return v
 
     def print_partnership_postings(self):
+        '''Print partnership postings for this transaction.
+        '''
         self.resolve_elided_posting_value()
         for p in self.real_postings:
             p.print_partnership_postings()
 
     def partnership_postings(self):
+        '''Generate partnership postings for this transaction.
+
+        :return: List of postings
+        '''
         self.resolve_elided_posting_value()
         p = [ q for p in self.real_postings for q in p.partnership_postings() ]
         return p
+
+    def get_all_lines(self):
+        '''Get all lines of this transaction.
+
+        :return: List of transaction lines
+        '''
+        xact_lines = self.lines + self.partnership_postings()
+        return xact_lines
+
+    def has_partnership_spec(self):
+        '''Return whether the transaction has a partnership specification.
+        '''
+        for line in self.lines:
+            if self.shkeypat.search(line):
+                return True
+        return False
+
+    def add_line(self, line):
+        '''Add line to transaction.
+
+        :return: None
+        '''
+        self.lines.append(line)
+        m_rpost = self.rpostpat.match(line)
+        if m_rpost:
+            self.add_posting(
+                m_rpost.group('account'),
+                m_rpost.group('value')
+            )
+        m_shkey = self.shkeypat.search(line)
+        if m_shkey:
+            partnership = m_shkey.group(1).strip()
+            self.add_partnership(partnership)
+
+    # Real posting pattern
+    rpostpat = re.compile(r'^\s+(?P<account>[\w\-,\'()、]+(\s?[\w\-,\'()、:]+)*)(\s{2,}(?P<value>-?\$?\s*-?[\d]+(,\d+)*(\.\d+)?))?')
+    # Partnership key pattern
+    shkeypat = re.compile(r';\s*Partnership\s*:\s*(.*)')
 
 def adjoin_partnership_postings(filepath):
     # Transaction begin pattern
     trbegpat = re.compile(r'^\d')
     # Transaction end pattern
     trendpat = re.compile(r'(^[^\s]|^[\s]*$)')
-    # Real posting pattern
-    rpostpat = re.compile(r'^\s+(?P<account>[\w\-,\'()、]+(\s?[\w\-,\'()、:]+)*)(\s{2,}(?P<value>-?\$?\s*-?[\d]+(,\d+)*(\.\d+)?))?')
-    # Partnership key pattern
-    shkeypat = re.compile(r';\s*Partnership\s*:(.*)')
 
     journal = []
+    xact_linenos = []
     partnershipless_xact_lines = []
 
     xact = Xact()
     bInXact = False
-    b_found_partnership_tag = False
     lineno = 0
     with open(filepath, 'r') as f:
         for line in f:
             lineno += 1
-            if bInXact:
-                if trendpat.match(line):
-                    # At end of transaction
-                    journal.extend(xact.partnership_postings())
-                    bInXact = False
-                    if b_found_partnership_tag:
-                        partnershipless_xact_lines.pop()
+            if not bInXact:
+                if trbegpat.match(line):
+                    bInXact = True
+                    xact_linenos.append(lineno)
+                    xact.clear()
+                    xact.add_line(line.rstrip('\n\r'))
                 else:
-                    m = rpostpat.match(line)
-                    if m:
-                        xact.add_posting(m.group('account'), m.group('value'))
-                    else:
-                        m = shkeypat.search(line)
-                        if m:
-                            b_found_partnership_tag = True
-                            partnership = m.group(1).strip()
-                            xact.add_partnership(partnership)
-
-            if not bInXact and trbegpat.match(line):
-                # At beginning of transaction
-                bInXact = True
-                partnershipless_xact_lines.append(lineno)
-                b_found_partnership_tag = False
-                xact.clear()
-                m = shkeypat.search(line)
-                if m:
-                    partnership = ast.literal_eval(m.group(1).strip())
-                    xact.add_partnership(partnership)
-
-            journal.append(line.rstrip())
-
-    if bInXact:
-        journal.extend(xact.partnership_postings())
-        bInXact = False
-        if b_found_partnership_tag:
-            partnershipless_xact_lines.pop()
+                    journal.append(line.rstrip('\n\r'))
+            else:
+                if trbegpat.match(line) or trendpat.match(line):
+                    if not xact.has_partnership_spec():
+                        partnershipless_xact_lines.append(xact_linenos[-1])
+                    journal.extend(xact.get_all_lines() + [ '' ])
+                    bInXact = False
+                    if trbegpat.match(line):
+                        bInXact = True
+                        xact_linenos.append(lineno)
+                        xact.clear()
+                        xact.add_line(line.rstrip('\n\r'))
+                else:
+                    xact.add_line(line.rstrip('\n\r'))
 
     return (journal, partnershipless_xact_lines)
 
