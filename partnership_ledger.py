@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from collections import OrderedDict
+import os
 import re
 
 class Posting:
@@ -228,7 +229,7 @@ def adjoin_partnership_postings(filepath):
     xact = Xact()
     bInXact = False
     lineno = 0
-    with open(filepath, 'r') as f:
+    with open(os.path.expanduser(filepath), 'r') as f:
         for line in f:
             lineno += 1
             if not bInXact:
@@ -255,6 +256,23 @@ def adjoin_partnership_postings(filepath):
 
     return (journal, partnershipless_xact_lines)
 
+def read_file_args_from_ledgerrc():
+    '''Read file arguments from `~/.ledgerrc`.
+
+    :return: List of filepaths.
+    '''
+    try:
+        with open(os.path.expanduser('~/.ledgerrc')) as f:
+            ledger_files = [
+                line.split(maxsplit=1)[1].strip()
+                for line in f
+                if (line.split(maxsplit=1)
+                    and line.split(maxsplit=1)[0] == '--file')
+            ]
+    except (FileNotFoundError, IndexError):
+        return None
+    return ledger_files
+
 if __name__ == "__main__":
     import argparse
     import subprocess
@@ -268,7 +286,11 @@ if __name__ == "__main__":
                         action = 'store_true',
                         help = 'print journal with partnership postings and exit')
     (args, ledger_args) = parser.parse_known_args()
-    filepaths = args.file
+    filepaths = (
+        args.file
+        if args.file is not None
+        else read_file_args_from_ledgerrc()
+    )
     just_print = args.just_print
 
     if filepaths is None:
