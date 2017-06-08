@@ -88,13 +88,16 @@ class RealPosting(Posting):
                     valueless_partners))
 
 class Xact:
-    def __init__(self):
+    def __init__(self, lines = None):
         # Raw transaction lines
         self.lines = []
         # List of real `Posting`s
         self.real_postings = []
         # OrderedDict of partners and values
         self.partnership_spec = OrderedDict()
+
+        if lines is not None:
+            self.add_lines(lines)
 
     def clear(self):
         del self.lines[:]
@@ -210,6 +213,10 @@ class Xact:
         if m_shkey:
             partnership = m_shkey.group(1).strip()
             self.add_partnership(partnership)
+
+    def add_lines(self, lines):
+        for line in lines:
+            self.add_line(line)
 
     # Real posting pattern
     rpostpat = re.compile(r'^\s+(?P<account>[\w\-,\'()、]+(\s?[\w\-,\'()、:]+)*)(\s{2,}(?P<value>-?\$?\s*-?[\d]+(,\d+)*(\.\d+)?))?')
