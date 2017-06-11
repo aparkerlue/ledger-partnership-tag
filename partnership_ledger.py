@@ -22,7 +22,8 @@ class RealPosting(Posting):
         if self.partnership_spec is not None and len(self.partnership_spec) > 0:
             s.append("    ; {}".format(dict(self.partnership_spec)))
             partnership_postings = self.generate_partnership_postings()
-            if partnership_postings is not None and len(partnership_postings) > 0:
+            if (partnership_postings is not None
+                and len(partnership_postings) > 0):
                 for p in partnership_postings:
                     s.append(str(p))
         return '\n'.join(s)
@@ -69,7 +70,8 @@ class RealPosting(Posting):
         return partnership_postings
 
     def has_complete_partnership_spec(self):
-        return not bool([ v for v in self.partnership_spec.values() if v is None ])
+        return not bool([ v for v in self.partnership_spec.values()
+                          if v is None ])
 
     def resolve_elided_partnership_value(self):
         valueless_partners = [ k for k, v in self.partnership_spec.items()
