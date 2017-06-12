@@ -139,9 +139,13 @@ class Xact:
 
     @staticmethod
     def interpret_partnership_spec(spec):
+        '''Interpret a partnership specification.
+
+        :return: Ordered dictionary of partnership values.
+        '''
         if spec.strip() != "None":
             partnership_spec = OrderedDict()
-            components = [ tuple(s.strip().split(" "))
+            components = [ tuple(s.strip().split(" ", maxsplit = 1))
                            for s in spec.split(',') ]
             for c in components:
                 k = c[0]
