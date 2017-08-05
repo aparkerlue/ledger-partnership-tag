@@ -92,6 +92,7 @@ It would be great if Ledger included built-in support for a
 
 ## To do ##
 
+- [ ] 2017-08-05 Properly handle commodities and commodity values
 - [x] 2017-02-18 Process `、` correctly
 - [ ] 2017-02-12 Print all partnership postings for each partner
   together
