@@ -149,6 +149,14 @@ grammar. I'd like to see something along these lines:
         Assets:Cash:Partner1                    $ 100.00
         Assets:Checking:Partner2
 
+Note that with more than two partners, you'll need an equity transfer
+balance account for each partner in order to keep track of who owes
+whom how much. With `n` partners, that means `n` real transfer balance
+accounts and `n^2` virtual ones. (You could also have `n` choose 2
+transfer balance accounts, which is the situation the foregoing
+example describes, but that isn't a very parsimonious setup when you
+have more than two partners.)
+
 ## Additional notes ##
 
 In order to fully implement partnership accounting in a journal, every
