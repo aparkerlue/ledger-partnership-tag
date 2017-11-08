@@ -72,6 +72,83 @@ postings:
 	    [Partner2:Assets:Cash:Checking]          $400.00
 	    [Partner2:Assets:Cash:Savings]          $-400.00
 
+### Loans between partners
+
+When one partner lends money to another, two bookkeeping conditions
+must hold in order to ensure that the real and virtual parts of the
+book remain balanced:
+
+1.  For each account, the sum of the virtual transaction amounts
+    across partners must equal the real transaction amount
+2.  For each partner, the sum of the virtual transaction amounts
+    across accounts must be zero
+
+Suppose `Partner1` lends `Partner2` $100. We can record the
+transaction this way:
+
+    2016-12-31 »Partnership Transfer«
+        ; Partnership: Partner2
+        Assets:Cash:Partner2                    $ 100.00
+        Assets:Cash:Partner1
+
+`partnership-ledger.py` replaces that transaction with this one:
+
+    2016-12-31 »Partnership Transfer«
+        ; Partnership: Partner2
+        Assets:Cash:Partner2                    $ 100.00
+        Assets:Cash:Partner1
+        [Partner2:Assets:Cash:Partner2]         $ 100.00
+        [Partner2:Assets:Cash:Partner1]        $ -100.00
+
+This transaction moves money around via the real postings and also
+keeps track of `Partner2`'s debt to `Partner1` via the virtual
+postings. Condition (1) holds since the amount for
+`[Partner2:Assets:Cash:Partner2]` equals that for
+`Assets:Cash:Partner2`, and the amount for
+`[Partner2:Assets:Cash:Partner1]` equals that for
+`Assets:Cash:Partner1`. Condition (2) holds since the amounts for
+`[Partner2:Assets:Cash:Partner2]` and
+`[Partner2:Assets:Cash:Partner1]` sum to zero.
+
+Keeping track of all debts requires reconciling the real and virtual
+balances for every account. That process can be cumbersome, so one
+solution is to periodically net all debts to an equity account that
+keeps a running total of net debt.
+
+    2016-12-31 »Partnership Reconciliation«
+        ; Partnership: None
+        [Partner2:Assets:Cash:Partner1]         $ 100.00
+        [Partner1:Assets:Cash:Partner1]        $ -100.00
+        [Partner2:Equity:Transfer Balance]      $ 100.00
+        [Partner1:Equity:Transfer Balance]     $ -100.00
+
+To round out the example, `Equity:Transfer Balance` now keeps track of
+net debt, so `Partner2` can record the following transaction when
+defeasing the liability:
+
+    2016-12-31 »Rebalance Partnership Equity«
+        ; Partnership: None
+        Assets:Cash:Partner1                    $ 100.00
+        Assets:Checking:Partner2
+        [Partner1:Assets:Cash:Partner1]         $ 100.00
+        [Partner2:Assets:Checking:Partner2]    $ -100.00
+        [Partner1:Equity:Transfer Balance]      $ 100.00
+        [Partner2:Equity:Transfer Balance]     $ -100.00
+
+Ideally I'd like `partnership_ledger.py` to recognize shortcuts for
+the foregoing transactions, but I haven't worked out an acceptable
+grammar. I'd like to see something along these lines:
+
+    2016-12-31 »Partnership Reconciliation«
+        ; Partnership: Partner2 100, Partner1 -100
+        Assets:Cash:Partner1                    $ 100.00
+        Equity:Transfer Balance
+
+    2016-12-31 »Partnership Partnership Equity«
+        ; Partnership: + Partner1, - Partner2
+        Assets:Cash:Partner1                    $ 100.00
+        Assets:Checking:Partner2
+
 ## Additional notes ##
 
 In order to fully implement partnership accounting in a journal, every
