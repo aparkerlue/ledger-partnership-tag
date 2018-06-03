@@ -278,6 +278,21 @@ def adjoin_partnership_postings(filepath):
     return (journal, partnershipless_xact_lines)
 
 
+def infer_filepaths(args):
+    if args.file is None and args.path is None:
+        return read_file_args_from_ledgerrc()
+
+    filepaths = []
+    if args.file is not None:
+        filepaths.extend(args.file)
+    if args.path is not None:
+        path = args.path[0]
+        x = [os.path.join(path, f) for f in os.listdir(path)
+             if os.path.isfile(os.path.join(path, f))]
+        filepaths.extend(x)
+    return filepaths
+
+
 def read_file_args_from_ledgerrc():
     '''Read file arguments from `~/.ledgerrc`.
 
@@ -307,8 +322,10 @@ if __name__ == "__main__":
             'and run Ledger.'
         )
     )
-    parser.add_argument('-f', '--file', metavar='FILE', nargs='*',
+    parser.add_argument('-f', '--file', metavar='FILE', nargs='+',
                         help='read journal data from FILE')
+    parser.add_argument('--path', metavar='PATH', nargs=1,
+                        help='read journal files in PATH')
     parser.add_argument(
         '-N',
         '--just-print',
@@ -316,11 +333,7 @@ if __name__ == "__main__":
         help='print journal with partnership postings and exit'
     )
     (args, ledger_args) = parser.parse_known_args()
-    filepaths = (
-        args.file
-        if args.file is not None
-        else read_file_args_from_ledgerrc()
-    )
+    filepaths = infer_filepaths(args)
     just_print = args.just_print
 
     if filepaths is None:
