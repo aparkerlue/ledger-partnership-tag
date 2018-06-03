@@ -180,6 +180,8 @@ It would be great if Ledger included built-in support for a
 - [ ] 2017-09-02 After each transaction, check that real account value
   equals sum of partner account values
 - [ ] 2017-09-02 Check for malformed account names (e.g. `[A:B]C]`)
+- [ ] 2017-08-06 Check for duplicate partnership specs (e.g.,
+  `Partnership: Partner1, Partner1`
 - [ ] 2017-08-05 Properly handle commodities and commodity values
 - [x] 2017-02-18 Process `、` correctly
 - [ ] 2017-02-12 Print all partnership postings for each partner
