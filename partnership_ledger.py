@@ -4,6 +4,8 @@ from collections import OrderedDict
 import os
 import re
 
+import gnupg
+
 
 class Posting:
     def __init__(self, account, value):
@@ -237,7 +239,11 @@ class Xact:
     shkeypat = re.compile(r';\s*Partnership\s*:\s*(.*)')
 
 
-def adjoin_partnership_postings(filepath):
+class DecryptionError(Exception):
+    pass
+
+
+def adjoin_partnership_postings(content):
     # Transaction begin pattern
     trbegpat = re.compile(r'^\d')
     # Transaction end pattern
@@ -250,30 +256,29 @@ def adjoin_partnership_postings(filepath):
     xact = Xact()
     bInXact = False
     lineno = 0
-    with open(os.path.expanduser(filepath), 'r') as f:
-        for line in f:
-            lineno += 1
-            if not bInXact:
+    for line in content:
+        lineno += 1
+        if not bInXact:
+            if trbegpat.match(line):
+                bInXact = True
+                xact_linenos.append(lineno)
+                xact.clear()
+                xact.add_line(line.rstrip('\n\r'))
+            else:
+                journal.append(line.rstrip('\n\r'))
+        else:
+            if trbegpat.match(line) or trendpat.match(line):
+                if not xact.has_partnership_spec():
+                    partnershipless_xact_lines.append(xact_linenos[-1])
+                journal.extend(xact.get_all_lines() + [''])
+                bInXact = False
                 if trbegpat.match(line):
                     bInXact = True
                     xact_linenos.append(lineno)
                     xact.clear()
                     xact.add_line(line.rstrip('\n\r'))
-                else:
-                    journal.append(line.rstrip('\n\r'))
             else:
-                if trbegpat.match(line) or trendpat.match(line):
-                    if not xact.has_partnership_spec():
-                        partnershipless_xact_lines.append(xact_linenos[-1])
-                    journal.extend(xact.get_all_lines() + [''])
-                    bInXact = False
-                    if trbegpat.match(line):
-                        bInXact = True
-                        xact_linenos.append(lineno)
-                        xact.clear()
-                        xact.add_line(line.rstrip('\n\r'))
-                else:
-                    xact.add_line(line.rstrip('\n\r'))
+                xact.add_line(line.rstrip('\n\r'))
 
     return (journal, partnershipless_xact_lines)
 
@@ -311,6 +316,26 @@ def read_file_args_from_ledgerrc():
     return ledger_files
 
 
+def read_journal_file(filepath):
+    """Read the journal file and return its contents.
+    """
+    if re.search('\.(asc|gpg)$', filepath):
+        gpg = gnupg.GPG()
+        gpg.encoding = 'utf-8'
+        with open(os.path.expanduser(filepath), 'rb') as f:
+            crypt = gpg.decrypt_file(f)
+        if not crypt.ok:
+            raise DecryptionError(
+                "Unable to decrypt `{}'"
+                .format(filepath)
+            )
+        content = str(crypt).splitlines(True)
+    else:
+        with open(os.path.expanduser(filepath)) as f:
+            content = f.readlines()
+    return content
+
+
 if __name__ == "__main__":
     import argparse
     import subprocess
@@ -345,7 +370,9 @@ if __name__ == "__main__":
     else:
         journal = []
         for f in filepaths:
-            (j, partnershipless_xact_lines) = adjoin_partnership_postings(f)
+            content = read_journal_file(f)
+            j, partnershipless_xact_lines = \
+                adjoin_partnership_postings(content)
             n = len(partnershipless_xact_lines)
             if n > 0:
                 print(

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+PATH="/usr/local/bin:/usr/bin"
+cd "${HOME}/ledger-partnership-tag"
+pipenv run python partnership_ledger.py \
+       --path "${HOME}/ledger_files" \
+       "$@"
