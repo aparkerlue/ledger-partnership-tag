@@ -1,7 +1,16 @@
 #!/bin/bash
 
-PATH="/usr/local/bin:/usr/bin"
-cd "${HOME}/ledger-partnership-tag"
-pipenv run python partnership_ledger.py \
-       --path "${HOME}/ledger_files" \
-       "$@"
+PATH="${HOME}/.local/bin:/usr/local/bin:/usr/bin"
+ldg_dir="${HOME}/ledger-partnership-tag"
+journals_dir="${HOME}/ledger_files"
+
+export PIPENV_PIPFILE="$ldg_dir/Pipfile"
+if [ ! -d "$ldg_dir" ]; then
+    >&2 echo "error: Directory \`$ldg_dir' does not exist"
+    exit 1
+elif [ ! -f "$PIPENV_PIPFILE" ]; then
+    >&2 echo "error: \`$PIPENV_PIPFILE' does not exist"
+    exit 1
+fi
+
+pipenv run python partnership_ledger.py --path "$journals_dir" "$@"
