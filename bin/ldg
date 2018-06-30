@@ -13,4 +13,4 @@ elif [ ! -f "$PIPENV_PIPFILE" ]; then
     exit 1
 fi
 
-pipenv run python partnership_ledger.py --path "$journals_dir" "$@"
+pipenv run python "$ldg_dir"/partnership_ledger.py --path "$journals_dir" "$@"
