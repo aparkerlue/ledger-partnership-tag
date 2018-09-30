@@ -13,7 +13,7 @@ class Posting:
         self.value = value
 
     def __str__(self):
-        return '    {}  $ {:.2f}'.format(self.account, self.value)
+        return "    {}  $ {:.2f}".format(self.account, self.value)
 
 
 class RealPosting(Posting):
@@ -23,15 +23,19 @@ class RealPosting(Posting):
 
     def __str__(self):
         s = [super().__str__()]
-        if (self.partnership_spec is not None
-                and len(self.partnership_spec) > 0):
+        if (
+            self.partnership_spec is not None
+            and len(self.partnership_spec) > 0
+        ):
             s.append("    ; {}".format(dict(self.partnership_spec)))
             partnership_postings = self.generate_partnership_postings()
-            if (partnership_postings is not None
-                    and len(partnership_postings) > 0):
+            if (
+                partnership_postings is not None
+                and len(partnership_postings) > 0
+            ):
                 for p in partnership_postings:
                     s.append(str(p))
-        return '\n'.join(s)
+        return "\n".join(s)
 
     def print_partnership_postings(self):
         partnership_postings = self.generate_partnership_postings()
@@ -75,24 +79,29 @@ class RealPosting(Posting):
         return partnership_postings
 
     def has_complete_partnership_spec(self):
-        return not bool([v for v in self.partnership_spec.values()
-                         if v is None])
+        return not bool(
+            [v for v in self.partnership_spec.values() if v is None]
+        )
 
     def resolve_elided_partnership_value(self):
-        valueless_partners = [k for k, v in self.partnership_spec.items()
-                              if v is None]
+        valueless_partners = [
+            k for k, v in self.partnership_spec.items() if v is None
+        ]
         if len(valueless_partners) == 0:
             pass
         elif len(valueless_partners) == 1:
             k = valueless_partners[0]
-            explicit_total = sum([v for k, v in self.partnership_spec.items()
-                                  if v is not None])
+            explicit_total = sum(
+                [v for k, v in self.partnership_spec.items() if v is not None]
+            )
             elided_value = 100 - explicit_total
             self.partnership_spec[k] = elided_value
         else:
             raise Exception(
-                'Multiple partners do not have values: {}'.format(
-                    valueless_partners))
+                "Multiple partners do not have values: {}".format(
+                    valueless_partners
+                )
+            )
 
 
 class Xact:
@@ -124,35 +133,46 @@ class Xact:
             self.partnership_spec.update(s)
 
     def resolve_elided_posting_value(self):
-        '''Determine and assign elided posting values.
+        """Determine and assign elided posting values.
 
         :return: None
-        '''
-        i_valueless = [i for i, v in
-                       zip(range(len(self.real_postings)), self.real_postings)
-                       if v.value is None]
+        """
+        i_valueless = [
+            i
+            for i, v in zip(range(len(self.real_postings)), self.real_postings)
+            if v.value is None
+        ]
         if len(i_valueless) == 0:
             pass
         elif len(i_valueless) == 1:
-            v = -sum([Xact.interpret_value(p.value) for p in self.real_postings
-                      if p.value is not None])
+            v = -sum(
+                [
+                    Xact.interpret_value(p.value)
+                    for p in self.real_postings
+                    if p.value is not None
+                ]
+            )
             i = i_valueless[0]
             self.real_postings[i].value = v
         else:
             raise Exception(
-                'Multiple postings do not have values: {}, {}'.format(
-                    i_valueless, self.real_postings))
+                "Multiple postings do not have values: {}, {}".format(
+                    i_valueless, self.real_postings
+                )
+            )
 
     @staticmethod
     def interpret_partnership_spec(spec):
-        '''Interpret a partnership specification.
+        """Interpret a partnership specification.
 
         :return: Ordered dictionary of partnership values.
-        '''
+        """
         if spec.strip() != "None":
             partnership_spec = OrderedDict()
-            components = [tuple(s.strip().split(" ", maxsplit=1))
-                          for s in spec.split(',')]
+            components = [
+                tuple(s.strip().split(" ", maxsplit=1))
+                for s in spec.split(",")
+            ]
             for c in components:
                 k = c[0]
                 try:
@@ -172,55 +192,52 @@ class Xact:
     @staticmethod
     def interpret_value(value):
         if type(value) is str:
-            v = float(value.translate({ord(c): None for c in '$,'}))
+            v = float(value.translate({ord(c): None for c in "$,"}))
         else:
             v = value
         return v
 
     def print_partnership_postings(self):
-        '''Print partnership postings for this transaction.
-        '''
+        """Print partnership postings for this transaction.
+        """
         self.resolve_elided_posting_value()
         for p in self.real_postings:
             p.print_partnership_postings()
 
     def partnership_postings(self):
-        '''Generate partnership postings for this transaction.
+        """Generate partnership postings for this transaction.
 
         :return: List of postings
-        '''
+        """
         self.resolve_elided_posting_value()
         p = [q for p in self.real_postings for q in p.partnership_postings()]
         return p
 
     def get_all_lines(self):
-        '''Get all lines of this transaction.
+        """Get all lines of this transaction.
 
         :return: List of transaction lines
-        '''
+        """
         xact_lines = self.lines + self.partnership_postings()
         return xact_lines
 
     def has_partnership_spec(self):
-        '''Return whether the transaction has a partnership specification.
-        '''
+        """Return whether the transaction has a partnership specification.
+        """
         for line in self.lines:
             if self.shkeypat.search(line):
                 return True
         return False
 
     def add_line(self, line):
-        '''Add line to transaction.
+        """Add line to transaction.
 
         :return: None
-        '''
+        """
         self.lines.append(line)
         m_rpost = self.rpostpat.match(line)
         if m_rpost:
-            self.add_posting(
-                m_rpost.group('account'),
-                m_rpost.group('value')
-            )
+            self.add_posting(m_rpost.group("account"), m_rpost.group("value"))
         m_shkey = self.shkeypat.search(line)
         if m_shkey:
             partnership = m_shkey.group(1).strip()
@@ -232,11 +249,11 @@ class Xact:
 
     # Real posting pattern
     rpostpat = re.compile(
-        r'^\s+(?P<account>[\w\-,\'()、]+(\s?[\w\-,\'()、:]+)*)'
-        r'(\s{2,}(?P<value>-?\$?\s*-?[\d]+(,\d+)*(\.\d+)?))?'
+        r"^\s+(?P<account>[\w\-,\'()、]+(\s?[\w\-,\'()、:]+)*)"
+        r"(\s{2,}(?P<value>-?\$?\s*-?[\d]+(,\d+)*(\.\d+)?))?"
     )
     # Partnership key pattern
-    shkeypat = re.compile(r';\s*Partnership\s*:\s*(.*)')
+    shkeypat = re.compile(r";\s*Partnership\s*:\s*(.*)")
 
 
 class DecryptionError(Exception):
@@ -245,9 +262,9 @@ class DecryptionError(Exception):
 
 def adjoin_partnership_postings(content):
     # Transaction begin pattern
-    trbegpat = re.compile(r'^\d')
+    trbegpat = re.compile(r"^\d")
     # Transaction end pattern
-    trendpat = re.compile(r'(^[^\s]|^[\s]*$)')
+    trendpat = re.compile(r"(^[^\s]|^[\s]*$)")
 
     journal = []
     xact_linenos = []
@@ -263,22 +280,22 @@ def adjoin_partnership_postings(content):
                 bInXact = True
                 xact_linenos.append(lineno)
                 xact.clear()
-                xact.add_line(line.rstrip('\n\r'))
+                xact.add_line(line.rstrip("\n\r"))
             else:
-                journal.append(line.rstrip('\n\r'))
+                journal.append(line.rstrip("\n\r"))
         else:
             if trbegpat.match(line) or trendpat.match(line):
                 if not xact.has_partnership_spec():
                     partnershipless_xact_lines.append(xact_linenos[-1])
-                journal.extend(xact.get_all_lines() + [''])
+                journal.extend(xact.get_all_lines() + [""])
                 bInXact = False
                 if trbegpat.match(line):
                     bInXact = True
                     xact_linenos.append(lineno)
                     xact.clear()
-                    xact.add_line(line.rstrip('\n\r'))
+                    xact.add_line(line.rstrip("\n\r"))
             else:
-                xact.add_line(line.rstrip('\n\r'))
+                xact.add_line(line.rstrip("\n\r"))
 
     return (journal, partnershipless_xact_lines)
 
@@ -292,24 +309,29 @@ def infer_filepaths(args):
         filepaths.extend(args.file)
     if args.path is not None:
         path = args.path[0]
-        x = [os.path.join(path, f) for f in os.listdir(path)
-             if os.path.isfile(os.path.join(path, f))]
+        x = [
+            os.path.join(path, f)
+            for f in os.listdir(path)
+            if os.path.isfile(os.path.join(path, f))
+        ]
         filepaths.extend(x)
     return filepaths
 
 
 def read_file_args_from_ledgerrc():
-    '''Read file arguments from `~/.ledgerrc`.
+    """Read file arguments from `~/.ledgerrc`.
 
     :return: List of filepaths.
-    '''
+    """
     try:
-        with open(os.path.expanduser('~/.ledgerrc')) as f:
+        with open(os.path.expanduser("~/.ledgerrc")) as f:
             ledger_files = [
                 line.split(maxsplit=1)[1].strip()
                 for line in f
-                if (line.split(maxsplit=1)
-                    and line.split(maxsplit=1)[0] == '--file')
+                if (
+                    line.split(maxsplit=1)
+                    and line.split(maxsplit=1)[0] == "--file"
+                )
             ]
     except (FileNotFoundError, IndexError):
         return None
@@ -319,16 +341,13 @@ def read_file_args_from_ledgerrc():
 def read_journal_file(filepath):
     """Read the journal file and return its contents.
     """
-    if re.search('\.(asc|gpg)$', filepath):
+    if re.search("\.(asc|gpg)$", filepath):
         gpg = gnupg.GPG()
-        gpg.encoding = 'utf-8'
-        with open(os.path.expanduser(filepath), 'rb') as f:
+        gpg.encoding = "utf-8"
+        with open(os.path.expanduser(filepath), "rb") as f:
             crypt = gpg.decrypt_file(f)
         if not crypt.ok:
-            raise DecryptionError(
-                "Unable to decrypt `{}'"
-                .format(filepath)
-            )
+            raise DecryptionError("Unable to decrypt `{}'".format(filepath))
         content = str(crypt).splitlines(True)
     else:
         with open(os.path.expanduser(filepath)) as f:
@@ -343,19 +362,25 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description=(
-            'Generate virtual partnership postings for journal '
-            'and run Ledger.'
+            "Generate virtual partnership postings for journal "
+            "and run Ledger."
         )
     )
-    parser.add_argument('-f', '--file', metavar='FILE', nargs='+',
-                        help='read journal data from FILE')
-    parser.add_argument('--path', metavar='PATH', nargs=1,
-                        help='read journal files in PATH')
     parser.add_argument(
-        '-N',
-        '--just-print',
-        action='store_true',
-        help='print journal with partnership postings and exit'
+        "-f",
+        "--file",
+        metavar="FILE",
+        nargs="+",
+        help="read journal data from FILE",
+    )
+    parser.add_argument(
+        "--path", metavar="PATH", nargs=1, help="read journal files in PATH"
+    )
+    parser.add_argument(
+        "-N",
+        "--just-print",
+        action="store_true",
+        help="print journal with partnership postings and exit",
     )
     (args, ledger_args) = parser.parse_known_args()
     filepaths = infer_filepaths(args)
@@ -366,21 +391,21 @@ if __name__ == "__main__":
             print("Error: No journal file specified", file=sys.stderr)
             sys.exit(1)
         else:
-            subprocess.run(['ledger'] + ledger_args)
+            subprocess.run(["ledger"] + ledger_args)
     else:
         journal = []
         for f in filepaths:
             content = read_journal_file(f)
-            j, partnershipless_xact_lines = \
-                adjoin_partnership_postings(content)
+            j, partnershipless_xact_lines = adjoin_partnership_postings(
+                content
+            )
             n = len(partnershipless_xact_lines)
             if n > 0:
                 print(
                     "Error: Found {} transactions in {} "
                     "that do not have partnership tags; "
-                    "see lines: {}"
-                    .format(n, f, partnershipless_xact_lines),
-                    file=sys.stderr
+                    "see lines: {}".format(n, f, partnershipless_xact_lines),
+                    file=sys.stderr,
                 )
                 sys.exit(1)
             journal.extend(j)
@@ -391,7 +416,9 @@ if __name__ == "__main__":
             print("Error: No ledger arguments provided", file=sys.stderr)
             sys.exit(1)
         else:
-            journal_string = '\n'.join(journal) + '\n'
-            encoded_journal_string = journal_string.encode('utf-8')
-            subprocess.run(['ledger', '-f', '-'] + ledger_args,
-                           input=encoded_journal_string)
+            journal_string = "\n".join(journal) + "\n"
+            encoded_journal_string = journal_string.encode("utf-8")
+            subprocess.run(
+                ["ledger", "-f", "-"] + ledger_args,
+                input=encoded_journal_string,
+            )

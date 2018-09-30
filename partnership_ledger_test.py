@@ -1,6 +1,7 @@
 import partnership_ledger
 import unittest
 
+
 class ExampleTransactions(unittest.TestCase):
     def test_transaction_1(self):
         transaction = """
@@ -17,9 +18,9 @@ class ExampleTransactions(unittest.TestCase):
     [Partner1:Assets:Cash:Checking]  $ 1000.00
     [Partner1:Income:Salary]  $ -1000.00
 """.strip()
-        x = partnership_ledger.Xact(transaction.split('\n'))
+        x = partnership_ledger.Xact(transaction.split("\n"))
         result = x.get_all_lines()
-        self.assertEqual(full_transaction.split('\n'), result)
+        self.assertEqual(full_transaction.split("\n"), result)
 
     def test_transaction_none(self):
         transaction = """
@@ -34,9 +35,9 @@ class ExampleTransactions(unittest.TestCase):
     Assets:Cash:Checking                    $ 1000.00
     Income:Salary
 """.strip()
-        x = partnership_ledger.Xact(transaction.split('\n'))
+        x = partnership_ledger.Xact(transaction.split("\n"))
         result = x.get_all_lines()
-        self.assertEqual(full_transaction.split('\n'), result)
+        self.assertEqual(full_transaction.split("\n"), result)
 
     def test_transaction_equal_split(self):
         transaction = """
@@ -55,9 +56,9 @@ class ExampleTransactions(unittest.TestCase):
     [A:Income:Salary]  $ -500.00
     [B:Income:Salary]  $ -500.00
 """.strip()
-        x = partnership_ledger.Xact(transaction.split('\n'))
+        x = partnership_ledger.Xact(transaction.split("\n"))
         result = x.get_all_lines()
-        self.assertEqual(full_transaction.split('\n'), result)
+        self.assertEqual(full_transaction.split("\n"), result)
 
     def test_transaction_arbitrary_split(self):
         transaction = """
@@ -76,10 +77,10 @@ class ExampleTransactions(unittest.TestCase):
     [A:Income:Salary]  $ -721.00
     [B:Income:Salary]  $ -279.00
 """.strip()
-        x = partnership_ledger.Xact(transaction.split('\n'))
+        x = partnership_ledger.Xact(transaction.split("\n"))
         result = x.get_all_lines()
-        self.assertEqual(full_transaction.split('\n'), result)
+        self.assertEqual(full_transaction.split("\n"), result)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
-
