@@ -23,16 +23,10 @@ class RealPosting(Posting):
 
     def __str__(self):
         s = [super().__str__()]
-        if (
-            self.partnership_spec is not None
-            and len(self.partnership_spec) > 0
-        ):
+        if self.partnership_spec is not None and len(self.partnership_spec) > 0:
             s.append("    ; {}".format(dict(self.partnership_spec)))
             partnership_postings = self.generate_partnership_postings()
-            if (
-                partnership_postings is not None
-                and len(partnership_postings) > 0
-            ):
+            if partnership_postings is not None and len(partnership_postings) > 0:
                 for p in partnership_postings:
                     s.append(str(p))
         return "\n".join(s)
@@ -79,14 +73,10 @@ class RealPosting(Posting):
         return partnership_postings
 
     def has_complete_partnership_spec(self):
-        return not bool(
-            [v for v in self.partnership_spec.values() if v is None]
-        )
+        return not bool([v for v in self.partnership_spec.values() if v is None])
 
     def resolve_elided_partnership_value(self):
-        valueless_partners = [
-            k for k, v in self.partnership_spec.items() if v is None
-        ]
+        valueless_partners = [k for k, v in self.partnership_spec.items() if v is None]
         if len(valueless_partners) == 0:
             pass
         elif len(valueless_partners) == 1:
@@ -98,9 +88,7 @@ class RealPosting(Posting):
             self.partnership_spec[k] = elided_value
         else:
             raise Exception(
-                "Multiple partners do not have values: {}".format(
-                    valueless_partners
-                )
+                "Multiple partners do not have values: {}".format(valueless_partners)
             )
 
 
@@ -170,8 +158,7 @@ class Xact:
         if spec.strip() != "None":
             partnership_spec = OrderedDict()
             components = [
-                tuple(s.strip().split(" ", maxsplit=1))
-                for s in spec.split(",")
+                tuple(s.strip().split(" ", maxsplit=1)) for s in spec.split(",")
             ]
             for c in components:
                 k = c[0]
@@ -328,10 +315,7 @@ def read_file_args_from_ledgerrc():
             ledger_files = [
                 line.split(maxsplit=1)[1].strip()
                 for line in f
-                if (
-                    line.split(maxsplit=1)
-                    and line.split(maxsplit=1)[0] == "--file"
-                )
+                if (line.split(maxsplit=1) and line.split(maxsplit=1)[0] == "--file")
             ]
     except (FileNotFoundError, IndexError):
         return None
@@ -341,7 +325,7 @@ def read_file_args_from_ledgerrc():
 def read_journal_file(filepath):
     """Read the journal file and return its contents.
     """
-    if re.search("\.(asc|gpg)$", filepath):
+    if re.search(r"\.ledger\.(asc|gpg)$", filepath):
         gpg = gnupg.GPG()
         gpg.encoding = "utf-8"
         with open(os.path.expanduser(filepath), "rb") as f:
@@ -349,9 +333,11 @@ def read_journal_file(filepath):
         if not crypt.ok:
             raise DecryptionError("Unable to decrypt `{}'".format(filepath))
         content = str(crypt).splitlines(True)
-    else:
+    elif filepath.endswith(".ledger"):
         with open(os.path.expanduser(filepath)) as f:
             content = f.readlines()
+    else:
+        content = None
     return content
 
 
@@ -362,16 +348,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description=(
-            "Generate virtual partnership postings for journal "
-            "and run Ledger."
+            "Generate virtual partnership postings for journal " "and run Ledger."
         )
     )
     parser.add_argument(
-        "-f",
-        "--file",
-        metavar="FILE",
-        nargs="+",
-        help="read journal data from FILE",
+        "-f", "--file", metavar="FILE", nargs="+", help="read journal data from FILE"
     )
     parser.add_argument(
         "--path", metavar="PATH", nargs=1, help="read journal files in PATH"
@@ -396,9 +377,9 @@ if __name__ == "__main__":
         journal = []
         for f in filepaths:
             content = read_journal_file(f)
-            j, partnershipless_xact_lines = adjoin_partnership_postings(
-                content
-            )
+            if content is None:
+                continue
+            j, partnershipless_xact_lines = adjoin_partnership_postings(content)
             n = len(partnershipless_xact_lines)
             if n > 0:
                 print(
@@ -419,6 +400,5 @@ if __name__ == "__main__":
             journal_string = "\n".join(journal) + "\n"
             encoded_journal_string = journal_string.encode("utf-8")
             subprocess.run(
-                ["ledger", "-f", "-"] + ledger_args,
-                input=encoded_journal_string,
+                ["ledger", "-f", "-"] + ledger_args, input=encoded_journal_string
             )
