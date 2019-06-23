@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PATH="${HOME}/.local/bin:/usr/local/bin:/usr/bin"
+PATH="${HOME}/.local/bin:${HOME}/.pyenv/shims:/usr/local/bin:/usr/bin:/bin"
 ldg_dir="${HOME}/ledger-partnership-tag"
 journals_dir="${HOME}/ledger_files"
 
