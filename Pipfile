@@ -7,12 +7,9 @@ name = "pypi"
 python-gnupg = "*"
 
 [dev-packages]
-jupyter = "*"
-jedi = "*"
-importmagic = "*"
-"autopep8" = "*"
-yapf = "*"
-"flake8" = "*"
+ipython = "*"
+rope = "*"
+black = "==19.3b0"
 
 [requires]
 python_version = "3.7"
