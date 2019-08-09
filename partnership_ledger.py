@@ -13,7 +13,7 @@ class Posting:
         self.value = value
 
     def __str__(self):
-        return "    {}  $ {:.2f}".format(self.account, self.value)
+        return "    {}  ${:.2f}".format(self.account, self.value)
 
 
 class RealPosting(Posting):
