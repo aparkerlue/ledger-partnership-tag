@@ -185,8 +185,7 @@ class Xact:
         return v
 
     def print_partnership_postings(self):
-        """Print partnership postings for this transaction.
-        """
+        """Print partnership postings for this transaction."""
         self.resolve_elided_posting_value()
         for p in self.real_postings:
             p.print_partnership_postings()
@@ -209,8 +208,7 @@ class Xact:
         return xact_lines
 
     def has_partnership_spec(self):
-        """Return whether the transaction has a partnership specification.
-        """
+        """Return whether the transaction has a partnership specification."""
         for line in self.lines:
             if self.shkeypat.search(line):
                 return True
@@ -323,9 +321,8 @@ def read_file_args_from_ledgerrc():
 
 
 def read_journal_file(filepath):
-    """Read the journal file and return its contents.
-    """
-    if re.search(r"\.ledger\.(asc|gpg)$", filepath):
+    """Read the journal file and return its contents."""
+    if filepath.endswith(".asc") or filepath.endswith(".gpg"):
         gpg = gnupg.GPG()
         gpg.encoding = "utf-8"
         with open(os.path.expanduser(filepath), "rb") as f:
@@ -333,11 +330,9 @@ def read_journal_file(filepath):
         if not crypt.ok:
             raise DecryptionError("Unable to decrypt `{}'".format(filepath))
         content = str(crypt).splitlines(True)
-    elif filepath.endswith(".ledger"):
+    else:
         with open(os.path.expanduser(filepath)) as f:
             content = f.readlines()
-    else:
-        content = None
     return content
 
 
