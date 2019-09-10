@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 from collections import OrderedDict
 import os
@@ -348,7 +348,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description=(
-            "Generate virtual partnership postings for journal " "and run Ledger."
+            "Generate virtual partnership postings for journal and run Ledger."
         )
     )
     parser.add_argument(
@@ -362,6 +362,12 @@ if __name__ == "__main__":
         "--just-print",
         action="store_true",
         help="print journal with partnership postings and exit",
+    )
+    parser.add_argument(
+        "-s",
+        "--strict",
+        action="store_true",
+        help="error if any transactions lack a partnership tag",
     )
     (args, ledger_args) = parser.parse_known_args()
     filepaths = infer_filepaths(args)
@@ -381,7 +387,7 @@ if __name__ == "__main__":
                 continue
             j, partnershipless_xact_lines = adjoin_partnership_postings(content)
             n = len(partnershipless_xact_lines)
-            if n > 0:
+            if args.strict and n > 0:
                 print(
                     "Error: Found {} transactions in {} "
                     "that do not have partnership tags; "
