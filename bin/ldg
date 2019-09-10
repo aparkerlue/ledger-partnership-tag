@@ -1,19 +1,19 @@
 #!/bin/sh
 
-if [ -z "$ldg_dir" ]; then
-    ldg_dir="${HOME}/ledger-partnership-tag"
+if [ -z "$LDG_DIR" ]; then
+    LDG_DIR="${HOME}/ledger-partnership-tag"
 fi
-if [ -z "$journals_dir" ]; then
-    journals_dir="${HOME}/ledger_files"
+if [ -z "$JOURNALS_DIR" ]; then
+    JOURNALS_DIR="${HOME}/ledger_files"
 fi
 
-export PIPENV_PIPFILE="$ldg_dir/Pipfile"
-if [ ! -d "$ldg_dir" ]; then
-    >&2 echo "error: Directory \`$ldg_dir' does not exist"
+export PIPENV_PIPFILE="$LDG_DIR/Pipfile"
+if [ ! -d "$LDG_DIR" ]; then
+    >&2 echo "error: Directory \`$LDG_DIR' does not exist"
     exit 1
 elif [ ! -f "$PIPENV_PIPFILE" ]; then
     >&2 echo "error: \`$PIPENV_PIPFILE' does not exist"
     exit 1
 fi
 
-pipenv run python "$ldg_dir"/partnership_ledger.py --path "$journals_dir" "$@"
+pipenv run python "$LDG_DIR"/partnership_ledger.py --path "$JOURNALS_DIR" "$@"
