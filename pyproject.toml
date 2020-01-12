@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "ledger-partnership-tag"
+version = "0.1.0"
+description = ""
+authors = ["Alan Parker Lue <aparkerlue@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+python-gnupg = "^0.4.5"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^3.7.9"
+ipython = "< 7.11"
+jupyter-console = "^6.0.0"
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
