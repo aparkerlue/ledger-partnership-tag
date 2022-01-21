@@ -10,7 +10,7 @@ python-gnupg = "^0.4.5"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7.9"
-ipython = "< 7.11"
+ipython = "<7.17"
 jupyter-console = "^6.0.0"
 pytest = "^5.2"
 
